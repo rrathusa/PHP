@@ -1,93 +1,86 @@
 <?php
 session_start();
-
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/nav.php';
 
-$db = db();
+$pdo = db();
 
-// --- Filtres ---
 $q = trim($_GET['q'] ?? '');
 $max = trim($_GET['max'] ?? '');
 
-$sql = "SELECT id, nom, prix, description FROM parfums WHERE 1";
+$sql = "SELECT id, nom, prix, description, image FROM parfums WHERE 1";
 $params = [];
 
 if ($q !== '') {
-  $sql .= " AND nom LIKE :q";
-  $params[':q'] = "%$q%";
+  $sql .= " AND nom LIKE ?";
+  $params[] = "%$q%";
 }
-
 if ($max !== '' && is_numeric($max)) {
-  $sql .= " AND prix <= :max";
-  $params[':max'] = (float)$max;
+  $sql .= " AND prix <= ?";
+  $params[] = (float)$max;
 }
 
 $sql .= " ORDER BY id DESC";
-
-$stmt = $db->prepare($sql);
+$stmt = $pdo->prepare($sql);
 $stmt->execute($params);
-$parfums = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$parfums = $stmt->fetchAll();
 
-$count = count($parfums);
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <section class="hero">
-  <div class="container">
-    <h1>Senteurs d’exception</h1>
-    <p>Explore notre sélection minutieusement choisie, et découvre le parfum qui te correspond. Blanc & doré, style premium.</p>
-  </div>
+  <h1>Senteurs d’exception</h1>
+  <p>Explore une sélection élégante • blanc, vert & doré.</p>
 </section>
 
-<section class="section">
-  <div class="container">
-
-    <form class="filters" method="get">
-      <div>
-        <label>Recherche (nom)</label>
-        <input type="text" name="q" placeholder="Ex: Dior" value="<?= htmlspecialchars($q) ?>">
-      </div>
-
-      <div>
-        <label>Prix maximum</label>
-        <input type="text" name="max" placeholder="Ex: 150" value="<?= htmlspecialchars($max) ?>">
-      </div>
-
-      <div style="display:flex; gap:10px;">
-        <button class="btn gold" type="submit">Appliquer</button>
-        <a class="btn secondary" href="catalog.php">Réinitialiser</a>
-      </div>
-
-      <div style="margin-left:auto; color:#6b7280; font-size:14px;">
-        <strong><?= $count ?></strong> produit(s)
-      </div>
-    </form>
-
-    <div class="grid">
-      <?php foreach ($parfums as $p): ?>
-        <article class="card">
-          <div class="img">
-            <div class="bottle" aria-hidden="true"></div>
-          </div>
-
-          <div class="body">
-            <h3><?= htmlspecialchars($p['nom']) ?></h3>
-            <div class="price"><?= number_format((float)$p['prix'], 2) ?> €</div>
-            <p class="desc"><?= htmlspecialchars($p['description']) ?></p>
-
-            <div class="actions">
-              <a class="btn secondary" href="product.php?id=<?= (int)$p['id'] ?>">Voir</a>
-
-              <a class="btn" href="cart.php?action=add&id=<?= (int)$p['id'] ?>">
-                Ajouter
-              </a>
-            </div>
-          </div>
-        </article>
-      <?php endforeach; ?>
+<div class="card filters">
+  <form method="GET" style="display:flex; gap:12px; flex-wrap:wrap; width:100%;">
+    <div class="input">
+      <label>Recherche (nom)</label>
+      <input type="text" name="q" value="<?= htmlspecialchars($q) ?>" placeholder="Ex: Dior">
     </div>
 
-  </div>
-</section>
+    <div class="input" style="max-width:220px;">
+      <label>Prix maximum</label>
+      <input type="number" step="0.01" name="max" value="<?= htmlspecialchars($max) ?>" placeholder="Ex: 150">
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:flex-end;">
+      <button class="btn btn-green" type="submit">Appliquer</button>
+      <a class="btn" href="/ProjetPHP/pages/catalog.php">Réinitialiser</a>
+    </div>
+  </form>
+</div>
+
+<p class="muted"><?= count($parfums) ?> produit(s)</p>
+
+<div class="grid">
+  <?php foreach ($parfums as $p): ?>
+    <?php
+      $img = trim($p['image'] ?? '');
+      $imgPath = $img !== '' ? "/ProjetPHP/assets/images/parfums/" . rawurlencode($img) : "";
+    ?>
+    <div class="card product">
+      <div class="img">
+        <?php if ($imgPath !== ""): ?>
+          <img src="<?= $imgPath ?>" alt="<?= htmlspecialchars($p['nom']) ?>">
+        <?php else: ?>
+          <span class="muted">Pas d’image</span>
+        <?php endif; ?>
+      </div>
+
+      <div class="body">
+        <h3><?= htmlspecialchars($p['nom']) ?></h3>
+        <div class="price"><?= number_format((float)$p['prix'], 2) ?> €</div>
+        <div class="desc"><?= htmlspecialchars($p['description']) ?></div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn" href="/ProjetPHP/pages/product.php?id=<?= (int)$p['id'] ?>">Voir</a>
+          <a class="btn btn-gold" href="/ProjetPHP/pages/add_to_cart.php?id=<?= (int)$p['id'] ?>">Ajouter</a>
+        </div>
+      </div>
+    </div>
+  <?php endforeach; ?>
+</div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
