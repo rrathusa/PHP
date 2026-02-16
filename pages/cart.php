@@ -4,50 +4,50 @@ require_once __DIR__ . '/../config/db.php';
 
 $pdo = db();
 
-// Panier = tableau [id => qty]
-if (!isset($_SESSION['cart'])) {
+// 1) Initialiser le panier correctement (évite ton erreur)
+if (!isset($_SESSION['cart']) || !is_array($_SESSION['cart'])) {
   $_SESSION['cart'] = [];
 }
 
-// --- ACTIONS (add, inc, dec, remove, clear) ---
+// 2) Actions panier
 $action = $_GET['action'] ?? null;
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($action === 'clear') {
   $_SESSION['cart'] = [];
-  header("Location: cart.php");
+  header("Location: /ProjetPHP/pages/cart.php");
   exit;
 }
 
 if ($id > 0) {
-  // si l'id existe pas encore dans le panier, on met 0
-  if (!isset($_SESSION['cart'][$id])) {
-    $_SESSION['cart'][$id] = 0;
-  }
-
   if ($action === 'add' || $action === 'inc') {
+    if (!isset($_SESSION['cart'][$id])) {
+      $_SESSION['cart'][$id] = 0;
+    }
     $_SESSION['cart'][$id] += 1;
-    header("Location: cart.php");
+    header("Location: /ProjetPHP/pages/cart.php");
     exit;
   }
 
   if ($action === 'dec') {
-    $_SESSION['cart'][$id] -= 1;
-    if ($_SESSION['cart'][$id] <= 0) {
-      unset($_SESSION['cart'][$id]);
+    if (isset($_SESSION['cart'][$id])) {
+      $_SESSION['cart'][$id] -= 1;
+      if ($_SESSION['cart'][$id] <= 0) {
+        unset($_SESSION['cart'][$id]);
+      }
     }
-    header("Location: cart.php");
+    header("Location: /ProjetPHP/pages/cart.php");
     exit;
   }
 
   if ($action === 'remove') {
     unset($_SESSION['cart'][$id]);
-    header("Location: cart.php");
+    header("Location: /ProjetPHP/pages/cart.php");
     exit;
   }
 }
 
-// --- LECTURE DU PANIER ---
+// 3) Lire panier
 $cart = $_SESSION['cart'];
 $items = [];
 $total = 0;
@@ -87,7 +87,6 @@ require_once __DIR__ . '/../includes/header.php';
       <p>
         <a class="btn gold" href="/ProjetPHP/pages/catalog.php">Retour au catalogue</a>
       </p>
-
     <?php else: ?>
 
       <table class="table">
@@ -108,17 +107,17 @@ require_once __DIR__ . '/../includes/header.php';
               <td><?= number_format((float)$it['prix'], 2) ?> €</td>
 
               <td>
-                <a class="btn secondary" href="cart.php?action=dec&id=<?= (int)$it['id'] ?>">-</a>
+                <a class="btn secondary" href="/ProjetPHP/pages/cart.php?action=dec&id=<?= (int)$it['id'] ?>">-</a>
                 <span style="display:inline-block; min-width:34px; text-align:center; font-weight:800;">
                   <?= (int)$it['qty'] ?>
                 </span>
-                <a class="btn secondary" href="cart.php?action=inc&id=<?= (int)$it['id'] ?>">+</a>
+                <a class="btn secondary" href="/ProjetPHP/pages/cart.php?action=inc&id=<?= (int)$it['id'] ?>">+</a>
               </td>
 
               <td><?= number_format((float)$it['subtotal'], 2) ?> €</td>
 
               <td>
-                <a class="btn" href="cart.php?action=remove&id=<?= (int)$it['id'] ?>">Supprimer</a>
+                <a class="btn" href="/ProjetPHP/pages/cart.php?action=remove&id=<?= (int)$it['id'] ?>">Supprimer</a>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -134,8 +133,10 @@ require_once __DIR__ . '/../includes/header.php';
 
       <p style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
         <a class="btn secondary" href="/ProjetPHP/pages/catalog.php">Continuer les achats</a>
-        <a class="btn" href="cart.php?action=clear">Vider le panier</a>
+        <a class="btn gold" href="/ProjetPHP/pages/checkout.php">Commander</a>
+        <a class="btn" href="/ProjetPHP/pages/cart.php?action=clear">Vider le panier</a>
       </p>
+
     <?php endif; ?>
 
   </div>
