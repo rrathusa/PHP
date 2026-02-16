@@ -23,6 +23,7 @@
       <a href="/ProjetPHP/pages/catalog.php">Parfums</a>
       <a href="/ProjetPHP/pages/cart.php">Panier</a>
       <a href="/ProjetPHP/pages/login.php">Connexion</a>
+      <a href="/ProjetPHP/pages/register.php">Inscription</a>
     </nav>
   </div>
 </header>

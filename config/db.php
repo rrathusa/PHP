@@ -5,7 +5,7 @@ function db(): PDO
     $host = "localhost";
     $dbname = "parfum_shop";
     $user = "root";
-    $pass = ""; // sur XAMPP c'est souvent vide
+    $pass = "Admin123"; // sur XAMPP c'est souvent vide
 
     try {
         $pdo = new PDO(
